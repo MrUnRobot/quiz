@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Book, Trash2, Plus, Play, Edit3, Save, X, Trash, CheckCircle } from 'lucide-react';
+import { Book, Trash2, Plus, Play, Edit3, Save, X, Trash, CheckCircle, PlusCircle } from 'lucide-react';
 
 export default function Library({ libraries, onNew, onDelete, onSelect, onUpdateLibrary }) {
   const [editingLib, setEditingLib] = useState(null);
