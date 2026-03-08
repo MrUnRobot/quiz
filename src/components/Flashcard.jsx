@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Check, X } from 'lucide-react';
 
-export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult }) {
+export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult, isLast }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [clickedBtn, setClickedBtn] = useState(null);
@@ -14,21 +14,19 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
 
   const handleStudyAction = (known) => {
     if (isProcessing) return;
-    
-    if (known) {
-      // SI LA SABE: Procedemos normal al siguiente índice
+
+    // CASO A: Se la sabe (Avanza siempre)
+    // CASO B: No se la sabe pero NO es la última (Avanza para seguir el flujo)
+    if (known || (!known && !isLast)) {
       setIsProcessing(true);
-      setClickedBtn('yes');
+      setClickedBtn(known ? 'yes' : 'no');
       setIsFlipped(false);
       setTimeout(() => onStudyResult(known), 350);
-    } else {
-      // SI NO LA SABE: 
-      // 1. Ponemos un estado visual de procesamiento corto
+    } 
+    // CASO C: No se la sabe y ES la última (Bloqueo para aprendizaje)
+    else {
       setIsProcessing(true);
-      // 2. Volvemos la tarjeta a la cara frontal (pregunta)
-      setIsFlipped(false);
-      // 3. Después de la animación, permitimos que lo intente de nuevo
-      // NO llamamos a onStudyResult, así el índice en App.jsx no cambia
+      setIsFlipped(false); // Volteamos la tarjeta al frente para repetir
       setTimeout(() => {
         setIsProcessing(false);
         setClickedBtn(null);
@@ -47,7 +45,7 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
         >
           <div className={`relative w-full h-full preserve-3d fast-flip ${isFlipped ? 'rotate-y-180' : ''}`}>
             
-            {/* Frontal */}
+            {/* Frontal: Pregunta */}
             <div className="absolute inset-0 backface-hidden custom-card p-10 rounded-[2.5rem] flex flex-col justify-center items-center text-center">
               <span className="text-[10px] font-black text-indigo-500 uppercase mb-4 tracking-widest">Pregunta</span>
               <h3 className="text-2xl font-bold leading-tight">{data.pregunta}</h3>
@@ -56,7 +54,7 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
               </div>
             </div>
 
-            {/* Trasera */}
+            {/* Trasera: Respuesta */}
             <div className="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 p-10 rounded-[2.5rem] text-white flex flex-col justify-center items-center text-center shadow-2xl">
               <span className="text-[10px] font-black opacity-60 uppercase mb-4 tracking-widest">Respuesta</span>
               <p className="text-3xl font-black">{data['opcion_' + (data.correcta?.toLowerCase() || 'a')]}</p>
@@ -84,7 +82,7 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
     );
   }
 
-  // Render para modo QUIZ (sin cambios)
+  // Renderizado Modo QUIZ (Examen)
   return (
     <div className="max-w-xl mx-auto custom-card p-8 rounded-[2.5rem]">
       <h3 className="text-2xl font-bold mb-8 leading-snug">{data.pregunta}</h3>
