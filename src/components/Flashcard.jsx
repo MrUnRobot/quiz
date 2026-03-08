@@ -14,10 +14,26 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
 
   const handleStudyAction = (known) => {
     if (isProcessing) return;
-    setIsProcessing(true);
-    setClickedBtn(known ? 'yes' : 'no');
-    setIsFlipped(false);
-    setTimeout(() => onStudyResult(known), 350);
+    
+    if (known) {
+      // SI LA SABE: Procedemos normal al siguiente índice
+      setIsProcessing(true);
+      setClickedBtn('yes');
+      setIsFlipped(false);
+      setTimeout(() => onStudyResult(known), 350);
+    } else {
+      // SI NO LA SABE: 
+      // 1. Ponemos un estado visual de procesamiento corto
+      setIsProcessing(true);
+      // 2. Volvemos la tarjeta a la cara frontal (pregunta)
+      setIsFlipped(false);
+      // 3. Después de la animación, permitimos que lo intente de nuevo
+      // NO llamamos a onStudyResult, así el índice en App.jsx no cambia
+      setTimeout(() => {
+        setIsProcessing(false);
+        setClickedBtn(null);
+      }, 400);
+    }
   };
 
   if (!data) return null;
@@ -31,7 +47,7 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
         >
           <div className={`relative w-full h-full preserve-3d fast-flip ${isFlipped ? 'rotate-y-180' : ''}`}>
             
-            {/* Frontal: Texto dinámico (Negro en claro / Blanco en oscuro) */}
+            {/* Frontal */}
             <div className="absolute inset-0 backface-hidden custom-card p-10 rounded-[2.5rem] flex flex-col justify-center items-center text-center">
               <span className="text-[10px] font-black text-indigo-500 uppercase mb-4 tracking-widest">Pregunta</span>
               <h3 className="text-2xl font-bold leading-tight">{data.pregunta}</h3>
@@ -40,8 +56,8 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
               </div>
             </div>
 
-            {/* Trasera: Siempre Indigo con texto Blanco (esto no cambia para mantener el impacto) */}
-            <div className="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 p-10 rounded-[2.5rem] text-white flex flex-col justify-center items-center text-center">
+            {/* Trasera */}
+            <div className="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 p-10 rounded-[2.5rem] text-white flex flex-col justify-center items-center text-center shadow-2xl">
               <span className="text-[10px] font-black opacity-60 uppercase mb-4 tracking-widest">Respuesta</span>
               <p className="text-3xl font-black">{data['opcion_' + (data.correcta?.toLowerCase() || 'a')]}</p>
             </div>
@@ -49,10 +65,18 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
         </div>
 
         <div className="flex gap-6 mt-10">
-          <button disabled={isProcessing} onClick={() => handleStudyAction(false)} className="flex-1 py-5 rounded-2xl font-black text-sm uppercase border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+          <button 
+            disabled={isProcessing} 
+            onClick={() => handleStudyAction(false)} 
+            className="flex-1 py-5 rounded-2xl font-black text-sm uppercase border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-95"
+          >
             <X size={20} className="inline mr-2" /> No la sé
           </button>
-          <button disabled={isProcessing} onClick={() => handleStudyAction(true)} className="flex-1 py-5 rounded-2xl font-black text-sm uppercase border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all">
+          <button 
+            disabled={isProcessing} 
+            onClick={() => handleStudyAction(true)} 
+            className="flex-1 py-5 rounded-2xl font-black text-sm uppercase border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all active:scale-95"
+          >
             <Check size={20} className="inline mr-2" /> La sé
           </button>
         </div>
@@ -60,6 +84,7 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
     );
   }
 
+  // Render para modo QUIZ (sin cambios)
   return (
     <div className="max-w-xl mx-auto custom-card p-8 rounded-[2.5rem]">
       <h3 className="text-2xl font-bold mb-8 leading-snug">{data.pregunta}</h3>
