@@ -45,7 +45,6 @@ function App() {
 
   const launchQuiz = (selectedMode, smart) => {
     if (!currentQuiz) return;
-    // Buscamos la versión más reciente de la librería por si fue editada
     const freshLib = libraries.find(l => l.id === currentQuiz.id) || currentQuiz;
     let data = [...freshLib.questions].sort(() => Math.random() - 0.5);
     setQuestions(data);
@@ -118,10 +117,22 @@ function App() {
             <Flashcard 
               data={questions[currentIndex]} 
               mode={mode} 
+              isLast={currentIndex === questions.length - 1}
               onStudyResult={(k) => {
-                if (isSmartLearn && !k) setQuestions(prev => [...prev, {...questions[currentIndex]}]);
-                if (currentIndex < questions.length - 1) setCurrentIndex(prev => prev + 1);
-                else setView('study_success');
+                // Smart Learn: Agrega al final si falló
+                if (isSmartLearn && !k) {
+                  setQuestions(prev => [...prev, {...questions[currentIndex]}]);
+                }
+
+                // Si se la sabe O no es la última, avanzamos de índice
+                if (k || currentIndex < questions.length - 1) {
+                  if (currentIndex < questions.length - 1) {
+                    setCurrentIndex(prev => prev + 1);
+                  } else {
+                    setView('study_success');
+                  }
+                }
+                // Si falló y era la última, el componente Flashcard ya manejó el reset visual
               }}
               onAnswer={(a) => {
                 setAnswers(prev => ({...prev, [currentIndex]: a}));
