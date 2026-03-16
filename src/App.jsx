@@ -7,6 +7,7 @@ import Results from './components/Results';
 import StudySuccess from './components/StudySuccess';
 import { useDarkMode } from './hooks/useDarkMode';
 
+// CONFIGURACIÓN DE LA NUBE
 const BIN_ID = "69ad2de643b1c97be9c0526f";
 const API_KEY = "$2a$10$eM45IyOzwdgwlmUeY7r8ROJ3k68Ik.0GrklXNyOscfyPO5hziELzu";
 
@@ -22,6 +23,7 @@ function App() {
   const [isSmartLearn, setIsSmartLearn] = useState(false);
   const [answers, setAnswers] = useState({});
 
+  // Cargar datos de la nube al iniciar
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
@@ -39,6 +41,7 @@ function App() {
     fetchCloudData();
   }, []);
 
+  // Guardar cambios en la nube
   const saveToCloud = async (newLibs) => {
     setLibraries(newLibs);
     try {
@@ -50,14 +53,15 @@ function App() {
     } catch (err) { console.error("Error nube:", err); }
   };
 
+  // Lanzar el modo seleccionado
   const launchQuiz = (selectedMode, smart) => {
     if (!currentQuiz) return;
     const freshLib = libraries.find(l => l.id === currentQuiz.id) || currentQuiz;
     let data = [...freshLib.questions];
 
     if (selectedMode === 'consult') {
-      setQuestions(data);
-      setAnswers({}); // No hay respuestas del usuario en modo consulta
+      setQuestions(data); // No mezclamos en modo consulta para respetar el orden original
+      setAnswers({}); 
       setView('results');
       return;
     }
@@ -72,6 +76,7 @@ function App() {
 
   return (
     <div className="min-h-screen transition-colors duration-300">
+      {/* BARRA DE NAVEGACIÓN */}
       <nav className="py-4 px-8 flex justify-between items-center sticky top-0 z-50 backdrop-blur-md border-b border-slate-200 dark:border-slate-800" style={{backgroundColor: 'var(--bg-app)'}}>
         <div className="flex items-center gap-2 cursor-pointer group" onClick={() => setView('library')}>
           <Zap className="text-indigo-600 fill-indigo-600 group-hover:scale-110 transition-transform" size={28} />
@@ -84,7 +89,7 @@ function App() {
             {theme === 'dark' ? <Sun size={20} className="text-yellow-500" /> : <Moon size={20} className="text-slate-600" />}
           </button>
           {view !== 'library' && (
-            <button onClick={() => setView('library')} className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg transition-all">
+            <button onClick={() => setView('library')} className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg transition-all active:scale-95">
               <LibraryIcon size={20} />
             </button>
           )}
@@ -93,12 +98,13 @@ function App() {
 
       <main className="container mx-auto px-6 py-10">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-indigo-500">
+          <div className="flex flex-col items-center justify-center py-20 text-indigo-500 text-center">
             <Cloud className="animate-bounce mb-4" size={48} />
-            <p className="font-black uppercase tracking-widest">Sincronizando...</p>
+            <p className="font-black uppercase tracking-widest italic">Sincronizando con la nube...</p>
           </div>
         ) : (
           <>
+            {/* VISTA: LIBRERÍA */}
             {view === 'library' && (
               <Library 
                 libraries={libraries} 
@@ -109,40 +115,48 @@ function App() {
               />
             )}
 
+            {/* VISTA: CARGA DE ARCHIVOS */}
             {view === 'upload' && <BulkUpload onDataReady={(d, f) => {
               const newLib = { id: Date.now(), name: f.replace('.csv', '').toUpperCase(), questions: d, progress: 0 };
               saveToCloud([newLib, ...libraries]);
               setView('library');
             }} onCancel={() => setView('library')} />}
 
+            {/* VISTA: SELECCIÓN DE MODO */}
             {view === 'selection' && (
               <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 animate-slide-up">
-                <div onClick={() => launchQuiz('study', true)} className="custom-card p-10 rounded-[3rem] cursor-pointer hover:border-indigo-500 transition-all text-center">
-                  <BookOpen size={40} className="text-indigo-600 mx-auto mb-4" />
+                <div onClick={() => launchQuiz('study', true)} className="custom-card p-10 rounded-[3rem] cursor-pointer hover:border-indigo-500 transition-all text-center group">
+                  <BookOpen size={40} className="text-indigo-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                   <h2 className="text-2xl font-black mb-2">Flashcards</h2>
-                  <p className="text-xs opacity-60">Repetición activa.</p>
+                  <p className="text-xs opacity-60 font-bold uppercase tracking-widest">Aprendizaje</p>
                 </div>
-                <div onClick={() => launchQuiz('quiz', false)} className="custom-card p-10 rounded-[3rem] cursor-pointer hover:border-indigo-500 transition-all text-center">
-                  <GraduationCap size={40} className="text-indigo-600 mx-auto mb-4" />
+                <div onClick={() => launchQuiz('quiz', false)} className="custom-card p-10 rounded-[3rem] cursor-pointer hover:border-indigo-500 transition-all text-center group">
+                  <GraduationCap size={40} className="text-indigo-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                   <h2 className="text-2xl font-black mb-2">Modo Examen</h2>
-                  <p className="text-xs opacity-60">Prueba con tiempo.</p>
+                  <p className="text-xs opacity-60 font-bold uppercase tracking-widest">Simulacro</p>
                 </div>
-                <div onClick={() => launchQuiz('consult', false)} className="custom-card p-10 rounded-[3rem] cursor-pointer border-2 border-dashed border-indigo-300 hover:border-indigo-600 transition-all text-center bg-indigo-50/30 dark:bg-indigo-900/10">
-                  <Search size={40} className="text-indigo-600 mx-auto mb-4" />
+                <div onClick={() => launchQuiz('consult', false)} className="custom-card p-10 rounded-[3rem] cursor-pointer border-2 border-dashed border-indigo-300 hover:border-indigo-600 transition-all text-center bg-indigo-50/30 dark:bg-indigo-900/10 group">
+                  <Search size={40} className="text-indigo-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                   <h2 className="text-2xl font-black mb-2">Consultar</h2>
-                  <p className="text-xs opacity-60">Ver respuestas de la guía.</p>
+                  <p className="text-xs opacity-60 font-bold uppercase tracking-widest">Solucionario</p>
                 </div>
               </div>
             )}
 
-            {view === 'quiz' && (
-              <div className="max-w-2xl mx-auto animate-slide-up">
+            {/* VISTA: EXAMEN / ESTUDIO ACTIVO */}
+            {view === 'quiz' && questions[currentIndex] && (
+              <div className="max-w-2xl mx-auto animate-slide-up py-4">
                 <Flashcard 
                   data={questions[currentIndex]} 
                   mode={mode} 
                   isLast={currentIndex === questions.length - 1}
+                  currentIndex={currentIndex}
+                  totalQuestions={questions.length}
                   onStudyResult={(k) => {
-                    if (isSmartLearn && !k) setQuestions(prev => [...prev, {...questions[currentIndex]}]);
+                    // Lógica de Repetición Inteligente (Smart Learn)
+                    if (isSmartLearn && !k) {
+                        setQuestions(prev => [...prev, {...questions[currentIndex]}]);
+                    }
                     if (k || currentIndex < questions.length - 1) {
                       if (currentIndex < questions.length - 1) setCurrentIndex(prev => prev + 1);
                       else setView('study_success');
@@ -150,13 +164,17 @@ function App() {
                   }}
                   onAnswer={(a) => {
                     setAnswers(prev => ({...prev, [currentIndex]: a}));
-                    if (currentIndex < questions.length - 1) setCurrentIndex(prev => prev + 1);
-                    else setView('results');
+                    if (currentIndex < questions.length - 1) {
+                        setCurrentIndex(prev => prev + 1);
+                    } else {
+                        setView('results');
+                    }
                   }} 
                 />
               </div>
             )}
             
+            {/* VISTAS FINALES */}
             {view === 'study_success' && <StudySuccess onRepeat={() => launchQuiz('study', true)} onHome={() => setView('library')} />}
             {view === 'results' && <Results questions={questions} answers={answers} onReset={() => setView('library')} />}
           </>
@@ -165,4 +183,5 @@ function App() {
     </div>
   );
 }
+
 export default App;
