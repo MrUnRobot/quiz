@@ -1,76 +1,80 @@
 import React from 'react';
-import { Trophy, RefreshCcw, CheckCircle2, XCircle, Award } from 'lucide-react';
+import { CheckCircle2, XCircle, Home, RotateCcw } from 'lucide-react';
 
 export default function Results({ questions, answers, onReset }) {
-  const score = questions.reduce((acc, q, idx) => acc + (answers[idx] === q.correcta ? 1 : 0), 0);
+  const score = questions.reduce((acc, q, idx) => {
+    return acc + (answers[idx] === q.correcta ? 1 : 0);
+  }, 0);
+
   const percentage = Math.round((score / questions.length) * 100);
 
   return (
-    <div className="max-w-6xl mx-auto animate-slide-up pb-20 px-4">
-      {/* Cabecera de Resultados */}
-      <div className="custom-card p-10 rounded-[3rem] text-center mb-12 max-w-2xl mx-auto border-b-8 border-indigo-600/20">
-        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg rotate-3">
-          <Award size={32} className="text-white" />
+    <div className="max-w-2xl mx-auto px-2 pb-10 animate-slide-up">
+      {/* Tarjeta de Puntaje */}
+      <div className="custom-card p-8 rounded-[2.5rem] text-center mb-8">
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 mb-4">
+          <span className="text-4xl font-black">{percentage}%</span>
         </div>
-        <h2 className="text-4xl font-black mb-10">Resultados del Examen</h2>
-        
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="p-6 rounded-[2rem] bg-white/60 dark:bg-slate-800/50 border border-white/50 dark:border-slate-700">
-            <p className="text-4xl font-black text-indigo-600">{percentage}%</p>
-            <p className="text-[10px] font-black opacity-50 uppercase tracking-widest mt-2">Puntaje</p>
-          </div>
-          <div className="p-6 rounded-[2rem] bg-white/60 dark:bg-slate-800/50 border border-white/50 dark:border-slate-700">
-            <p className="text-4xl font-black text-indigo-600">{score}/{questions.length}</p>
-            <p className="text-[10px] font-black opacity-50 uppercase tracking-widest mt-2">Aciertos</p>
-          </div>
-        </div>
-
-        <button 
-          onClick={onReset} 
-          className="w-full bg-slate-900 dark:bg-indigo-600 text-white py-5 rounded-2xl font-black text-xl hover:scale-[1.02] transition-all shadow-xl"
-        >
-          <RefreshCcw size={24} className="inline mr-2" /> REINTENTAR GUÍA
-        </button>
+        <h2 className="text-3xl font-black mb-2">¡Examen Terminado!</h2>
+        <p className="opacity-60 font-medium">
+          Has acertado {score} de {questions.length} preguntas
+        </p>
       </div>
 
-      <h3 className="text-2xl font-black mb-8 border-l-8 border-indigo-600 pl-6 ml-2">Revisión por Pregunta</h3>
-
-      {/* Grid de 2 columnas: Dos preguntas por fila */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Lista de Revisión */}
+      <div className="space-y-4">
         {questions.map((q, idx) => (
-          <div key={idx} className="custom-card p-8 rounded-[2.5rem] flex flex-col shadow-md">
-            <div className="flex gap-4 mb-6">
+          <div key={idx} className="custom-card p-5 rounded-[2rem] border-l-8 border-l-transparent overflow-hidden" 
+               style={{ borderLeftColor: answers[idx] === q.correcta ? '#22c55e' : '#ef4444' }}>
+            
+            {/* Pregunta con ajuste de texto para móviles */}
+            <div className="flex gap-3 mb-4">
               {answers[idx] === q.correcta ? (
-                <div className="bg-green-100 text-green-600 p-2 rounded-xl h-fit shadow-sm"><CheckCircle2 size={24} /></div>
+                <CheckCircle2 className="text-green-500 shrink-0" size={20} />
               ) : (
-                <div className="bg-red-100 text-red-600 p-2 rounded-xl h-fit shadow-sm"><XCircle size={24} /></div>
+                <XCircle className="text-red-500 shrink-0" size={20} />
               )}
-              <h4 className="font-black leading-tight text-base md:text-lg pt-1">{q.pregunta}</h4>
+              <h4 className="font-bold leading-tight break-words overflow-hidden">
+                {q.pregunta}
+              </h4>
             </div>
 
-            <div className="grid gap-3 mt-auto">
-              {['A', 'B', 'C', 'D'].map((letter) => {
-                const isUserChoice = answers[idx] === letter;
-                const isCorrect = q.correcta === letter;
-
-                // Cápsulas de respuesta con fondo blanco/crema sobre la tarjeta gris
-                let capClasses = "bg-white/80 dark:bg-slate-800/40 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300";
-                
-                if (isCorrect) capClasses = "bg-green-600 text-white border-green-700 font-black shadow-md scale-[1.03] z-10";
-                else if (isUserChoice) capClasses = "bg-red-500 text-white border-red-700 font-black shadow-md";
-
-                return (
-                  <div key={letter} className={`p-4 rounded-xl border-2 flex items-center gap-4 text-sm transition-all ${capClasses}`}>
-                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-black ${isCorrect || isUserChoice ? 'bg-white/20' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
-                      {letter}
-                    </span>
-                    <span className="font-bold truncate text-xs md:text-sm">{q['opcion_' + letter.toLowerCase()]}</span>
-                  </div>
-                );
-              })}
+            {/* Opciones */}
+            <div className="grid gap-2 ml-8">
+              <div className="text-sm p-3 rounded-xl bg-slate-100 dark:bg-slate-800/50 break-words">
+                <span className="font-black text-[10px] uppercase opacity-40 block mb-1">Tu respuesta</span>
+                <span className={answers[idx] === q.correcta ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+                  {q['opcion_' + (answers[idx]?.toLowerCase() || 'a')]}
+                </span>
+              </div>
+              
+              {answers[idx] !== q.correcta && (
+                <div className="text-sm p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 break-words">
+                  <span className="font-black text-[10px] uppercase text-green-600 opacity-60 block mb-1">Respuesta correcta</span>
+                  <span className="text-green-700 dark:text-green-400 font-bold">
+                    {q['opcion_' + q.correcta.toLowerCase()]}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Botones de acción */}
+      <div className="flex flex-col sm:flex-row gap-4 mt-10">
+        <button 
+          onClick={onReset}
+          className="flex-1 py-5 bg-slate-200 dark:bg-slate-800 rounded-2xl font-black uppercase text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+        >
+          <Home size={18} /> Inicio
+        </button>
+        <button 
+          onClick={() => window.location.reload()}
+          className="flex-1 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95 transition-all"
+        >
+          <RotateCcw size={18} /> Reintentar
+        </button>
       </div>
     </div>
   );
