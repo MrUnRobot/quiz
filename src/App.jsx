@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Moon, Sun, Library as LibraryIcon, BookOpen, GraduationCap, Cloud } from 'lucide-react';
+import { Zap, Moon, Sun, Library as LibraryIcon, BookOpen, GraduationCap, Cloud, Search } from 'lucide-react';
 import Library from './components/Library';
 import BulkUpload from './components/BulkUpload';
 import Flashcard from './components/Flashcard';
@@ -7,7 +7,6 @@ import Results from './components/Results';
 import StudySuccess from './components/StudySuccess';
 import { useDarkMode } from './hooks/useDarkMode';
 
-// CONFIGURACIÓN DE LA NUBE
 const BIN_ID = "69ad2de643b1c97be9c0526f";
 const API_KEY = "$2a$10$eM45IyOzwdgwlmUeY7r8ROJ3k68Ik.0GrklXNyOscfyPO5hziELzu";
 
@@ -23,7 +22,6 @@ function App() {
   const [isSmartLearn, setIsSmartLearn] = useState(false);
   const [answers, setAnswers] = useState({});
 
-  // Cargar datos de la nube
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
@@ -41,45 +39,30 @@ function App() {
     fetchCloudData();
   }, []);
 
-  // Guardar en la nube
   const saveToCloud = async (newLibs) => {
     setLibraries(newLibs);
     try {
       await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': API_KEY
-        },
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
         body: JSON.stringify(newLibs)
       });
-    } catch (err) {
-      console.error("Error al guardar en la nube:", err);
-    }
-  };
-
-  const handleUpdateLibrary = (updatedLib) => {
-    const newLibs = libraries.map(lib => lib.id === updatedLib.id ? updatedLib : lib);
-    saveToCloud(newLibs);
-  };
-
-  const handleFileUpload = (data, fileName) => {
-    const newLib = {
-      id: Date.now(),
-      name: fileName.replace('.csv', '').toUpperCase(),
-      questions: data,
-      progress: 0
-    };
-    const updatedLibs = [newLib, ...libraries];
-    saveToCloud(updatedLibs);
-    setView('library');
+    } catch (err) { console.error("Error nube:", err); }
   };
 
   const launchQuiz = (selectedMode, smart) => {
     if (!currentQuiz) return;
     const freshLib = libraries.find(l => l.id === currentQuiz.id) || currentQuiz;
-    let data = [...freshLib.questions].sort(() => Math.random() - 0.5);
-    setQuestions(data);
+    let data = [...freshLib.questions];
+
+    if (selectedMode === 'consult') {
+      setQuestions(data);
+      setAnswers({}); // No hay respuestas del usuario en modo consulta
+      setView('results');
+      return;
+    }
+
+    setQuestions(data.sort(() => Math.random() - 0.5));
     setMode(selectedMode);
     setIsSmartLearn(smart);
     setCurrentIndex(0);
@@ -101,7 +84,7 @@ function App() {
             {theme === 'dark' ? <Sun size={20} className="text-yellow-500" /> : <Moon size={20} className="text-slate-600" />}
           </button>
           {view !== 'library' && (
-            <button onClick={() => setView('library')} className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg transition-all active:scale-95">
+            <button onClick={() => setView('library')} className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg transition-all">
               <LibraryIcon size={20} />
             </button>
           )}
@@ -112,7 +95,7 @@ function App() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-indigo-500">
             <Cloud className="animate-bounce mb-4" size={48} />
-            <p className="font-black uppercase tracking-widest italic">Sincronizando...</p>
+            <p className="font-black uppercase tracking-widest">Sincronizando...</p>
           </div>
         ) : (
           <>
@@ -122,39 +105,38 @@ function App() {
                 onNew={() => setView('upload')} 
                 onDelete={(id) => saveToCloud(libraries.filter(l => l.id !== id))} 
                 onSelect={(lib) => { setCurrentQuiz(lib); setView('selection'); }}
-                onUpdateLibrary={handleUpdateLibrary}
+                onUpdateLibrary={(lib) => saveToCloud(libraries.map(l => l.id === lib.id ? lib : l))}
               />
             )}
 
-            {view === 'upload' && <BulkUpload onDataReady={handleFileUpload} onCancel={() => setView('library')} />}
+            {view === 'upload' && <BulkUpload onDataReady={(d, f) => {
+              const newLib = { id: Date.now(), name: f.replace('.csv', '').toUpperCase(), questions: d, progress: 0 };
+              saveToCloud([newLib, ...libraries]);
+              setView('library');
+            }} onCancel={() => setView('library')} />}
 
             {view === 'selection' && (
-              <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 animate-slide-up">
-                <div onClick={() => launchQuiz('study', true)} className="custom-card p-12 rounded-[3rem] cursor-pointer hover:border-indigo-500 transition-all">
-                  <BookOpen size={48} className="text-indigo-600 mb-6" />
-                  <h2 className="text-3xl font-black mb-3">Flashcards</h2>
-                  <p className="opacity-60 font-medium">Memorización con repetición.</p>
+              <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 animate-slide-up">
+                <div onClick={() => launchQuiz('study', true)} className="custom-card p-10 rounded-[3rem] cursor-pointer hover:border-indigo-500 transition-all text-center">
+                  <BookOpen size={40} className="text-indigo-600 mx-auto mb-4" />
+                  <h2 className="text-2xl font-black mb-2">Flashcards</h2>
+                  <p className="text-xs opacity-60">Repetición activa.</p>
                 </div>
-                <div onClick={() => launchQuiz('quiz', false)} className="custom-card p-12 rounded-[3rem] cursor-pointer hover:border-indigo-500 transition-all">
-                  <GraduationCap size={48} className="text-indigo-600 mb-6" />
-                  <h2 className="text-3xl font-black mb-3">Modo Examen</h2>
-                  <p className="opacity-60 font-medium">Ponte a prueba con tiempo.</p>
+                <div onClick={() => launchQuiz('quiz', false)} className="custom-card p-10 rounded-[3rem] cursor-pointer hover:border-indigo-500 transition-all text-center">
+                  <GraduationCap size={40} className="text-indigo-600 mx-auto mb-4" />
+                  <h2 className="text-2xl font-black mb-2">Modo Examen</h2>
+                  <p className="text-xs opacity-60">Prueba con tiempo.</p>
+                </div>
+                <div onClick={() => launchQuiz('consult', false)} className="custom-card p-10 rounded-[3rem] cursor-pointer border-2 border-dashed border-indigo-300 hover:border-indigo-600 transition-all text-center bg-indigo-50/30 dark:bg-indigo-900/10">
+                  <Search size={40} className="text-indigo-600 mx-auto mb-4" />
+                  <h2 className="text-2xl font-black mb-2">Consultar</h2>
+                  <p className="text-xs opacity-60">Ver respuestas de la guía.</p>
                 </div>
               </div>
             )}
 
-            {view === 'quiz' && questions[currentIndex] && (
+            {view === 'quiz' && (
               <div className="max-w-2xl mx-auto animate-slide-up">
-                <div className="flex justify-between items-center mb-8 custom-card p-6 rounded-3xl">
-                  <div>
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Pregunta</p>
-                    <p className="text-2xl font-black">{currentIndex + 1} / {questions.length}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Guía</p>
-                    <p className="text-sm font-bold">{currentQuiz?.name}</p>
-                  </div>
-                </div>
                 <Flashcard 
                   data={questions[currentIndex]} 
                   mode={mode} 
@@ -183,5 +165,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
