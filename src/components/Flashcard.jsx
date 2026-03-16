@@ -11,7 +11,7 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
     setClickedBtn(null);
     setIsProcessing(false);
 
-    // FIX MÓVILES: Quita el foco del botón anterior para que no se quede "iluminado"
+    // FIX MÓVILES: Limpia el foco del botón anterior al cambiar pregunta
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -46,7 +46,6 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
           onClick={() => !isProcessing && setIsFlipped(!isFlipped)}
         >
           <div className={`relative w-full h-full preserve-3d fast-flip ${isFlipped ? 'rotate-y-180' : ''}`}>
-            
             <div className="absolute inset-0 backface-hidden custom-card p-10 rounded-[2.5rem] flex flex-col justify-center items-center text-center">
               <span className="text-[10px] font-black text-indigo-500 uppercase mb-4 tracking-widest">Pregunta</span>
               <h3 className="text-2xl font-bold leading-tight">{data.pregunta}</h3>
@@ -93,9 +92,8 @@ export default function Flashcard({ data, onAnswer, mode = 'quiz', onStudyResult
             onClick={(e) => { 
               setIsProcessing(true); 
               onAnswer(letter); 
-              e.currentTarget.blur(); // Limpia el foco al hacer click
+              e.currentTarget.blur();
             }}
-            // Cambiamos hover: por active: para móviles y añadimos outline-none
             className="w-full text-left p-5 rounded-2xl border border-slate-200 dark:border-slate-800 active:border-indigo-500 active:bg-indigo-50 dark:active:bg-indigo-900/20 transition-all flex items-center gap-4 group outline-none"
           >
             <span className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black text-indigo-600 group-active:bg-indigo-600 group-active:text-white transition-colors">
