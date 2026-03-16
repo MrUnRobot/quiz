@@ -1,37 +1,66 @@
-import React from 'react';
-import { CheckCircle2, XCircle, Home, RotateCcw, Search, BookOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle2, XCircle, Home, RotateCcw, Search, BookOpen, Filter } from 'lucide-react';
 
 export default function Results({ questions, answers, onReset }) {
+  const [searchTerm, setSearchTerm] = useState('');
   const hasUserAnswers = Object.keys(answers).length > 0;
+  
   const score = questions.reduce((acc, q, idx) => acc + (answers[idx] === q.correcta ? 1 : 0), 0);
   const percentage = Math.round((score / questions.length) * 100);
 
+  // Lógica de búsqueda mejorada
+  const filteredQuestions = questions.map((q, originalIdx) => ({ ...q, originalIdx }))
+    .filter(q => 
+      q.pregunta.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ['a', 'b', 'c', 'd'].some(l => q['opcion_' + l].toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
   return (
     <div className="w-full max-w-3xl mx-auto px-2 pb-10 animate-slide-up">
-      {/* Resumen de Puntaje (Solo si viene de Examen) */}
-      {hasUserAnswers && (
-        <div className="custom-card p-8 rounded-[2.5rem] text-center mb-8 border-b-4 border-indigo-500">
+      {/* Cabecera de Puntaje o Consulta */}
+      {hasUserAnswers ? (
+        <div className="custom-card p-8 rounded-[2.5rem] text-center mb-6 border-b-4 border-indigo-500">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 mb-4">
             <span className="text-3xl font-black">{percentage}%</span>
           </div>
-          <h2 className="text-2xl font-black mb-1 italic uppercase tracking-tighter">Resultado Final</h2>
-          <p className="opacity-60 font-bold">Lograste {score} de {questions.length} aciertos</p>
+          <h2 className="text-2xl font-black mb-1 italic uppercase tracking-tighter">Resultados</h2>
+          <p className="opacity-60 font-bold">Acertaste {score} de {questions.length}</p>
         </div>
-      )}
-
-      {!hasUserAnswers && (
-        <div className="mb-8 flex items-center gap-4 p-6 custom-card rounded-[2rem] bg-indigo-600 text-white">
-          <Search size={32} />
-          <div>
-            <h2 className="text-xl font-black uppercase tracking-tight">Modo Consulta</h2>
-            <p className="text-xs opacity-80 font-bold">Explorando el solucionario de la guía</p>
+      ) : (
+        <div className="mb-6 flex flex-col gap-4 p-6 custom-card rounded-[2rem] bg-indigo-600 text-white">
+          <div className="flex items-center gap-4">
+            <BookOpen size={32} />
+            <div>
+              <h2 className="text-xl font-black uppercase">Solucionario Interactivo</h2>
+              <p className="text-xs opacity-80">Guía completa con {questions.length} reactivos</p>
+            </div>
           </div>
         </div>
       )}
 
+      {/* BARRA DE BÚSQUEDA */}
+      <div className="sticky top-20 z-40 mb-8">
+        <div className="relative group">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+          <input 
+            type="text"
+            placeholder="Buscar pregunta o respuesta..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full p-5 pl-14 rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:border-indigo-500 outline-none shadow-xl transition-all font-medium"
+          />
+          {searchTerm && (
+            <span className="absolute right-5 top-1/2 -translate-y-1/2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg text-xs font-bold text-slate-500">
+              {filteredQuestions.length} resultados
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Lista de Preguntas */}
       <div className="space-y-8">
-        {questions.map((q, idx) => {
+        {filteredQuestions.map((q) => {
+          const idx = q.originalIdx; // Mantenemos el número real de la pregunta
           const userAnswer = answers[idx];
           const isCorrect = userAnswer === q.correcta;
 
@@ -39,35 +68,26 @@ export default function Results({ questions, answers, onReset }) {
             <div key={idx} className="custom-card p-6 rounded-[2.5rem] border-t-4" 
                  style={{ borderTopColor: !hasUserAnswers ? '#6366f1' : isCorrect ? '#22c55e' : '#ef4444' }}>
               
-              {/* ENCABEZADO: Número de pregunta + Texto */}
               <div className="flex flex-col gap-4 mb-6">
-                <div className="flex gap-3">
-                  {/* Círculo con número de pregunta */}
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-sm shadow-lg">
-                    {idx + 1}
+                <div className="flex gap-4">
+                  <div className="shrink-0 w-12 h-12 rounded-2xl bg-indigo-600 text-white flex flex-col items-center justify-center shadow-lg">
+                    <span className="text-[10px] font-black leading-none opacity-60 uppercase">Nº</span>
+                    <span className="text-lg font-black leading-none">{idx + 1}</span>
                   </div>
                   <h3 className="font-bold text-lg leading-tight break-words flex-1 mt-1">
                     {q.pregunta}
                   </h3>
                 </div>
 
-                {/* IMAGEN DE APOYO (UAM STYLE) */}
                 {q.imagen_url && q.imagen_url.trim() !== "" && (
-                  <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white p-2 shadow-inner">
-                    <img 
-                      src={q.imagen_url} 
-                      alt={`Gráfica pregunta ${idx + 1}`} 
-                      className="w-full h-auto max-h-[400px] object-contain mx-auto transition-transform hover:scale-105"
-                      onError={(e) => { e.target.parentElement.style.display = 'none'; }}
-                    />
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white p-2">
+                    <img src={q.imagen_url} alt="Gráfica" className="w-full h-auto max-h-[400px] object-contain mx-auto transition-transform hover:scale-105" />
                   </div>
                 )}
               </div>
 
-              {/* OPCIONES DE RESPUESTA */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {['A', 'B', 'C', 'D'].map((letter) => {
-                  const optionText = q['opcion_' + letter.toLowerCase()];
                   const isCurrentOptionCorrect = letter === q.correcta;
                   const isCurrentOptionSelected = letter === userAnswer;
 
@@ -90,8 +110,8 @@ export default function Results({ questions, answers, onReset }) {
                       <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${circleClass}`}>
                         {letter}
                       </span>
-                      <span className={`text-sm break-words leading-tight min-w-0 ${textClass}`}>
-                        {optionText}
+                      <span className="text-sm break-words leading-tight min-w-0 font-medium">
+                        {q['opcion_' + letter.toLowerCase()]}
                       </span>
                     </div>
                   );
@@ -102,13 +122,9 @@ export default function Results({ questions, answers, onReset }) {
         })}
       </div>
 
-      {/* Botones de acción */}
       <div className="flex flex-col sm:flex-row gap-4 mt-12">
         <button onClick={onReset} className="flex-1 py-5 bg-slate-200 dark:bg-slate-800 rounded-2xl font-black uppercase text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-          <Home size={18} /> Menú Principal
-        </button>
-        <button onClick={() => window.location.reload()} className="flex-1 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
-          <RotateCcw size={18} /> {hasUserAnswers ? 'Reintentar Examen' : 'Volver al Inicio'}
+          <Home size={18} /> Inicio
         </button>
       </div>
     </div>
