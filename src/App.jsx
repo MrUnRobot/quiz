@@ -7,7 +7,7 @@ import Results from './components/Results';
 import StudySuccess from './components/StudySuccess';
 import { useDarkMode } from './hooks/useDarkMode';
 
-// CONFIGURACIÓN DE LA NUBE (Tus llaves personales)
+// CONFIGURACIÓN DE LA NUBE
 const BIN_ID = "69ad2de643b1c97be9c0526f";
 const API_KEY = "$2a$10$eM45IyOzwdgwlmUeY7r8ROJ3k68Ik.0GrklXNyOscfyPO5hziELzu";
 
@@ -15,7 +15,7 @@ function App() {
   const [theme, setTheme] = useDarkMode();
   const [view, setView] = useState('library'); 
   const [libraries, setLibraries] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // Para saber si está cargando de la nube
+  const [isLoading, setIsLoading] = useState(true);
   const [currentQuiz, setCurrentQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -23,7 +23,7 @@ function App() {
   const [isSmartLearn, setIsSmartLearn] = useState(false);
   const [answers, setAnswers] = useState({});
 
-  // 1. CARGAR DATOS DE LA NUBE AL INICIAR
+  // Cargar datos de la nube
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
@@ -41,9 +41,9 @@ function App() {
     fetchCloudData();
   }, []);
 
-  // 2. FUNCIÓN PARA GUARDAR EN LA NUBE (Sustituye a localStorage)
+  // Guardar en la nube
   const saveToCloud = async (newLibs) => {
-    setLibraries(newLibs); // Actualiza la pantalla de inmediato
+    setLibraries(newLibs);
     try {
       await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
@@ -53,10 +53,8 @@ function App() {
         },
         body: JSON.stringify(newLibs)
       });
-      console.log("¡Sincronizado con éxito!");
     } catch (err) {
       console.error("Error al guardar en la nube:", err);
-      alert("Hubo un error al sincronizar con la nube.");
     }
   };
 
@@ -114,7 +112,7 @@ function App() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-indigo-500">
             <Cloud className="animate-bounce mb-4" size={48} />
-            <p className="font-black uppercase tracking-widest">Sincronizando con la nube...</p>
+            <p className="font-black uppercase tracking-widest italic">Sincronizando...</p>
           </div>
         ) : (
           <>
@@ -185,4 +183,5 @@ function App() {
     </div>
   );
 }
+
 export default App;
